@@ -1,4 +1,4 @@
-package com.sopromadze.blogapi.payload;
+package com.sopromadze.blogapi.payload.photo;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;

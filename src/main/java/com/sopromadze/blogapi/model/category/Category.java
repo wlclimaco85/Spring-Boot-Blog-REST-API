@@ -21,7 +21,7 @@ import com.sopromadze.blogapi.model.post.Post;
 
 @Entity
 @Table(name = "categories")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+//@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Category extends UserDateAudit{
 	
 	/**

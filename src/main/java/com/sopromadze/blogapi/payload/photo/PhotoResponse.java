@@ -1,4 +1,4 @@
-package com.sopromadze.blogapi.payload;
+package com.sopromadze.blogapi.payload.photo;
 
 public class PhotoResponse {
     private Long id;

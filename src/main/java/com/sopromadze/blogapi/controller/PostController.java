@@ -2,7 +2,8 @@ package com.sopromadze.blogapi.controller;
 
 import com.sopromadze.blogapi.model.post.Post;
 import com.sopromadze.blogapi.payload.PagedResponse;
-import com.sopromadze.blogapi.payload.PostRequest;
+import com.sopromadze.blogapi.payload.post.PostRequest;
+import com.sopromadze.blogapi.payload.post.PostResponse;
 import com.sopromadze.blogapi.security.CurrentUser;
 import com.sopromadze.blogapi.security.UserPrincipal;
 import com.sopromadze.blogapi.service.PostService;
@@ -26,7 +27,7 @@ public class PostController {
     }
 
     @GetMapping
-    public PagedResponse<Post> getAllPosts(
+    public PagedResponse<PostResponse> getAllPosts(
                 @RequestParam(value = "page", required = false, defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) Integer page,
                 @RequestParam(value = "size", required = false, defaultValue = AppConstants.DEFAULT_PAGE_SIZE) Integer size){
         return postService.getAllPosts(page, size);

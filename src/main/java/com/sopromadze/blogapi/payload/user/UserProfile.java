@@ -1,4 +1,4 @@
-package com.sopromadze.blogapi.payload;
+package com.sopromadze.blogapi.payload.user;
 
 import com.sopromadze.blogapi.model.user.Address;
 import com.sopromadze.blogapi.model.user.Company;

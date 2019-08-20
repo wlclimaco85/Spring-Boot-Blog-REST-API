@@ -1,4 +1,4 @@
-package com.sopromadze.blogapi.payload;
+package com.sopromadze.blogapi.payload.user;
 
 public class UserSummary {
     private Long id;

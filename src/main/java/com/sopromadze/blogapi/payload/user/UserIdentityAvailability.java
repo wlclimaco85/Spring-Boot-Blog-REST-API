@@ -1,4 +1,4 @@
-package com.sopromadze.blogapi.payload;
+package com.sopromadze.blogapi.payload.user;
 
 public class UserIdentityAvailability {
     private Boolean available;

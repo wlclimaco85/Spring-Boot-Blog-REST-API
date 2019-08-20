@@ -1,8 +1,10 @@
-package com.sopromadze.blogapi.payload;
+package com.sopromadze.blogapi.payload.post;
 
 import java.util.List;
 
-public class PostResponse {
+import com.sopromadze.blogapi.payload.audit.UserDateAudit;
+
+public class PostResponse extends UserDateAudit{
     private String title;
     private String body;
     private String category;

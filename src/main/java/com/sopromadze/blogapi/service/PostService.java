@@ -26,8 +26,8 @@ import com.sopromadze.blogapi.model.tag.Tag;
 import com.sopromadze.blogapi.model.user.User;
 import com.sopromadze.blogapi.payload.ApiResponse;
 import com.sopromadze.blogapi.payload.PagedResponse;
-import com.sopromadze.blogapi.payload.PostRequest;
-import com.sopromadze.blogapi.payload.PostResponse;
+import com.sopromadze.blogapi.payload.post.PostRequest;
+import com.sopromadze.blogapi.payload.post.PostResponse;
 import com.sopromadze.blogapi.repository.CategoryRepository;
 import com.sopromadze.blogapi.repository.PostRepository;
 import com.sopromadze.blogapi.repository.TagRepository;
@@ -56,18 +56,38 @@ public class PostService {
         this.tagRepository = tagRepository;
     }
 
-    public PagedResponse<Post> getAllPosts(int page, int size){
+    public PagedResponse<PostResponse> getAllPosts(int page, int size){
         validatePageNumberAndSize(page, size);
 
         Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
 
         Page<Post> posts = postRepository.findAll(pageable);
-
-        if (posts.getNumberOfElements() == 0){
-            return new PagedResponse<>(Collections.emptyList(), posts.getNumber(), posts.getSize(), posts.getTotalElements(), posts.getTotalPages(), posts.isLast());
+        
+        List<PostResponse> postResponses = new ArrayList<PostResponse>();
+        
+        for(Post post: posts.getContent()) {
+        	PostResponse postResponse = new PostResponse();
+        	
+        	postResponse.setTitle(post.getTitle());
+        	postResponse.setBody(post.getBody());
+        	postResponse.setCategory(post.getCategory().getName());
+        	postResponse.setCreatedAt(post.getCreatedAt());
+        	postResponse.setUpdatedAt(post.getUpdatedAt());
+        	postResponse.setCreatedBy(post.getUpdatedBy());
+        	postResponse.setUpdateBy(post.getUpdatedBy());
+        	
+        	List<String> tags = new ArrayList<String>();
+        	
+        	for(Tag tag: post.getTags()) {
+        		tags.add(tag.getName());
+        	}
+        	
+        	postResponse.setTags(tags);
+        	
+        	postResponses.add(postResponse);
         }
 
-        return new PagedResponse<>(posts.getContent(), posts.getNumber(), posts.getSize(), posts.getTotalElements(), posts.getTotalPages(), posts.isLast());
+        return new PagedResponse<>(postResponses, posts.getNumber(), postResponses.size(), posts.getTotalElements(), posts.getTotalPages(), posts.isLast());
     }
 
     public PagedResponse<Post> getPostsByCreatedBy(String username, int page, int size){

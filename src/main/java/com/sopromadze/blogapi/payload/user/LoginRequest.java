@@ -1,4 +1,4 @@
-package com.sopromadze.blogapi.payload;
+package com.sopromadze.blogapi.payload.user;
 
 import javax.validation.constraints.NotBlank;
 

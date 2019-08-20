@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sopromadze.blogapi.payload.PagedResponse;
-import com.sopromadze.blogapi.payload.PhotoRequest;
-import com.sopromadze.blogapi.payload.PhotoResponse;
+import com.sopromadze.blogapi.payload.photo.PhotoRequest;
+import com.sopromadze.blogapi.payload.photo.PhotoResponse;
 import com.sopromadze.blogapi.security.CurrentUser;
 import com.sopromadze.blogapi.security.UserPrincipal;
 import com.sopromadze.blogapi.service.PhotoService;

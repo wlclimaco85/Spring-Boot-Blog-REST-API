@@ -1,11 +1,6 @@
 package com.sopromadze.blogapi.payload;
 
-import org.hibernate.validator.constraints.URL;
-import org.modelmapper.internal.bytebuddy.agent.builder.AgentBuilder;
-
-import javax.validation.GroupSequence;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 public class InfoRequest {
     @NotBlank
