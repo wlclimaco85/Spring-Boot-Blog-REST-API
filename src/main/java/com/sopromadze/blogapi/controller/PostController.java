@@ -34,7 +34,7 @@ public class PostController {
     }
     
     @GetMapping("/category/{id}")
-    public PagedResponse<Post> getPostsByCategory(
+    public PagedResponse<PostResponse> getPostsByCategory(
     		@RequestParam(value = "page", required = false, defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) Integer page,
             @RequestParam(value = "size", required = false, defaultValue = AppConstants.DEFAULT_PAGE_SIZE) Integer size,
             @PathVariable(name = "id") Long id

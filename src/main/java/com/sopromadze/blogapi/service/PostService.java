@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
-import com.sopromadze.blogapi.exception.BadRequestException;
 import com.sopromadze.blogapi.exception.ResourceNotFoundException;
 import com.sopromadze.blogapi.model.category.Category;
 import com.sopromadze.blogapi.model.post.Post;
@@ -33,7 +32,6 @@ import com.sopromadze.blogapi.repository.PostRepository;
 import com.sopromadze.blogapi.repository.TagRepository;
 import com.sopromadze.blogapi.repository.UserRepository;
 import com.sopromadze.blogapi.security.UserPrincipal;
-import com.sopromadze.blogapi.util.AppConstants;
 import com.sopromadze.blogapi.util.AppUtils;
 
 @Service
@@ -57,7 +55,7 @@ public class PostService {
     }
 
     public PagedResponse<PostResponse> getAllPosts(int page, int size){
-        validatePageNumberAndSize(page, size);
+        AppUtils.validatePageNumberAndSize(page, size);
 
         Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
 
@@ -66,23 +64,7 @@ public class PostService {
         List<PostResponse> postResponses = new ArrayList<PostResponse>();
         
         for(Post post: posts.getContent()) {
-        	PostResponse postResponse = new PostResponse();
-        	
-        	postResponse.setTitle(post.getTitle());
-        	postResponse.setBody(post.getBody());
-        	postResponse.setCategory(post.getCategory().getName());
-        	postResponse.setCreatedAt(post.getCreatedAt());
-        	postResponse.setUpdatedAt(post.getUpdatedAt());
-        	postResponse.setCreatedBy(post.getUpdatedBy());
-        	postResponse.setUpdateBy(post.getUpdatedBy());
-        	
-        	List<String> tags = new ArrayList<String>();
-        	
-        	for(Tag tag: post.getTags()) {
-        		tags.add(tag.getName());
-        	}
-        	
-        	postResponse.setTags(tags);
+        	PostResponse postResponse = AppUtils.mapPostToPosteResponse(post);
         	
         	postResponses.add(postResponse);
         }
@@ -91,7 +73,7 @@ public class PostService {
     }
 
     public PagedResponse<Post> getPostsByCreatedBy(String username, int page, int size){
-        validatePageNumberAndSize(page, size);
+        AppUtils.validatePageNumberAndSize(page, size);
         User user = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
         Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
         Page<Post> posts = postRepository.findByCreatedBy(user.getId(), pageable);
@@ -102,16 +84,22 @@ public class PostService {
         return new PagedResponse<>(posts.getContent(), posts.getNumber(), posts.getSize(), posts.getTotalElements(), posts.getTotalPages(), posts.isLast());
     }
     
-    public PagedResponse<Post> getPostsByCategory(Long id, int page, int size){
+    public PagedResponse<PostResponse> getPostsByCategory(Long id, int page, int size){
     	AppUtils.validatePageNumberAndSize(page, size);
     	Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
     	
     	Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
-    	Page<Post> posts = postRepository.findByCategory(category.getId(), pageable);
+    	Page<Post> posts = postRepository.findByCategory(category, pageable);
     	
-    	List<Post> content = posts.getNumberOfElements() == 0 ? Collections.emptyList() : posts.getContent();
+    	List<PostResponse> postResponses = new ArrayList<PostResponse>();
     	
-    	return new PagedResponse<>(content, posts.getNumber(), posts.getSize(), posts.getTotalElements(), posts.getTotalPages(), posts.isLast());
+    	for(Post post : posts.getContent()) {
+    		PostResponse postResponse = AppUtils.mapPostToPosteResponse(post);
+    		
+    		postResponses.add(postResponse);
+    	}
+    	
+    	return new PagedResponse<>(postResponses, posts.getNumber(), postResponses.size(), posts.getTotalElements(), posts.getTotalPages(), posts.isLast());
     }
     
     public PagedResponse<Post> getPostsByTag(Long id, int page, int size){
@@ -131,23 +119,28 @@ public class PostService {
     public ResponseEntity<?> updatePost(Long id, PostRequest newPostRequest, UserPrincipal currentUser){
         Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post", "id", id));
         Category category = categoryRepository.findById(newPostRequest.getCategoryId()).orElseThrow(() -> new ResourceNotFoundException("Category", "id", newPostRequest.getCategoryId()));
+        
         if (post.getUser().getId().equals(currentUser.getId()) || currentUser.getAuthorities().contains(new SimpleGrantedAuthority(RoleName.ROLE_ADMIN.toString()))){
-            post.setTitle(newPostRequest.getTitle());
+        	List<Tag> tags = new ArrayList<Tag>();
+            
+            for(String name : newPostRequest.getTags()) {
+            	Tag tag = tagRepository.findByName(name);
+            	tag = tag == null ? tagRepository.save(new Tag(name)) : tag;
+            	
+            	tags.add(tag);
+            }
+        	
+        	post.setTitle(newPostRequest.getTitle());
             post.setBody(newPostRequest.getBody());
             post.setCategory(category);
+            post.setImgUrl(newPostRequest.getImgUrl());
+            post.setTags(tags);
             Post updatedPost = postRepository.save(post);
-            return new ResponseEntity<>(updatedPost, HttpStatus.OK);
+            
+            PostResponse postResponse = AppUtils.mapPostToPosteResponse(updatedPost);
+            return new ResponseEntity<>(postResponse, HttpStatus.OK);
         }
         return new ResponseEntity<>(new ApiResponse(false, "You don't have permission to edit this post"), HttpStatus.UNAUTHORIZED);
-    }
-
-    public ResponseEntity<?> deletePost(Long id, UserPrincipal currentUser){
-        Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post", "id", id));
-        if (post.getUser().getId().equals(currentUser.getId()) || currentUser.getAuthorities().contains(new SimpleGrantedAuthority(RoleName.ROLE_ADMIN.toString()))){
-            postRepository.deleteById(id);
-            return new ResponseEntity<>(new ApiResponse(true, "You successfully deleted post"), HttpStatus.OK);
-        }
-        return new ResponseEntity<>(new ApiResponse(true, "You don't have permission to delete this post"), HttpStatus.UNAUTHORIZED);
     }
 
     public ResponseEntity<?> addPost(PostRequest postRequest, UserPrincipal currentUser){
@@ -169,42 +162,29 @@ public class PostService {
         post.setCategory(category);
         post.setUser(user);
         post.setTags(tags);
+        post.setImgUrl(postRequest.getImgUrl());
         
         Post newPost =  postRepository.save(post);
         
-        PostResponse postResponse = new PostResponse();
-        
-        postResponse.setTitle(newPost.getTitle());
-        postResponse.setBody(newPost.getBody());
-        postResponse.setCategory(newPost.getCategory().getName());
-        
-        List<String> tagNames = new ArrayList<String>();
-        
-        for(Tag tag : newPost.getTags()) {
-        	tagNames.add(tag.getName());
-        }
-        
-        postResponse.setTags(tagNames);
+        PostResponse postResponse = AppUtils.mapPostToPosteResponse(newPost);
         
         return new ResponseEntity<>(postResponse, HttpStatus.CREATED);
     }
 
     public ResponseEntity<?> getPost(Long id){
         Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post", "id", id));
-        return new ResponseEntity<>(post, HttpStatus.OK);
+        
+        PostResponse postResponse = AppUtils.mapPostToPosteResponse(post);
+        
+        return new ResponseEntity<>(postResponse, HttpStatus.OK);
     }
 
-    private void validatePageNumberAndSize(int page, int size) {
-        if(page < 0) {
-            throw new BadRequestException("Page number cannot be less than zero.");
+    public ResponseEntity<?> deletePost(Long id, UserPrincipal currentUser){
+        Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post", "id", id));
+        if (post.getUser().getId().equals(currentUser.getId()) || currentUser.getAuthorities().contains(new SimpleGrantedAuthority(RoleName.ROLE_ADMIN.toString()))){
+            postRepository.deleteById(id);
+            return new ResponseEntity<>(new ApiResponse(true, "You successfully deleted post"), HttpStatus.OK);
         }
-
-        if(size < 0) {
-            throw new BadRequestException("Size number cannot be less than zero.");
-        }
-
-        if(size > AppConstants.MAX_PAGE_SIZE) {
-            throw new BadRequestException("Page size must not be greater than " + AppConstants.MAX_PAGE_SIZE);
-        }
+        return new ResponseEntity<>(new ApiResponse(true, "You don't have permission to delete this post"), HttpStatus.UNAUTHORIZED);
     }
 }

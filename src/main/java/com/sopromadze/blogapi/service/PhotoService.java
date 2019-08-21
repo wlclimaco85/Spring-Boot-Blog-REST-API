@@ -1,6 +1,19 @@
 package com.sopromadze.blogapi.service;
 
-import com.sopromadze.blogapi.exception.BadRequestException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Service;
+
 import com.sopromadze.blogapi.exception.ResourceNotFoundException;
 import com.sopromadze.blogapi.model.album.Album;
 import com.sopromadze.blogapi.model.photo.Photo;
@@ -12,20 +25,7 @@ import com.sopromadze.blogapi.payload.photo.PhotoResponse;
 import com.sopromadze.blogapi.repository.AlbumRepository;
 import com.sopromadze.blogapi.repository.PhotoRepository;
 import com.sopromadze.blogapi.security.UserPrincipal;
-import com.sopromadze.blogapi.util.AppConstants;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.sopromadze.blogapi.util.AppUtils;
 
 @Service
 public class PhotoService {
@@ -39,7 +39,7 @@ public class PhotoService {
     }
 
     public PagedResponse<PhotoResponse> getAllPhotos(int page, int size){
-        validatePageNumberAndSize(page, size);
+    	AppUtils.validatePageNumberAndSize(page, size);
 
         Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
         Page<Photo> photos = photoRepository.findAll(pageable);
@@ -95,7 +95,7 @@ public class PhotoService {
 
     public PagedResponse<?> getAllPhotosByAlbum(Long albumId, int page, int size){
         Album album = albumRepository.findById(albumId).orElseThrow(() -> new ResourceNotFoundException("Album", "id", albumId));
-        validatePageNumberAndSize(page, size);
+        AppUtils.validatePageNumberAndSize(page, size);
 
         Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
 
@@ -107,19 +107,5 @@ public class PhotoService {
         }
 
         return new PagedResponse<>(photoResponses, photos.getNumber(), photos.getSize(), photos.getTotalElements(), photos.getTotalPages(), photos.isLast());
-    }
-
-    private void validatePageNumberAndSize(int page, int size) {
-        if(page < 0) {
-            throw new BadRequestException("Page number cannot be less than zero.");
-        }
-
-        if(size < 0) {
-            throw new BadRequestException("Size number cannot be less than zero.");
-        }
-
-        if(size > AppConstants.MAX_PAGE_SIZE) {
-            throw new BadRequestException("Page size must not be greater than " + AppConstants.MAX_PAGE_SIZE);
-        }
     }
 }

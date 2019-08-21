@@ -22,6 +22,16 @@ public class PostRequest {
     private Long categoryId;
     
     private List<String> tags;
+    
+    private String imgUrl;
+
+	public String getImgUrl() {
+		return imgUrl;
+	}
+
+	public void setImgUrl(String imgUrl) {
+		this.imgUrl = imgUrl;
+	}
 
 	public String getTitle() {
 		return title;

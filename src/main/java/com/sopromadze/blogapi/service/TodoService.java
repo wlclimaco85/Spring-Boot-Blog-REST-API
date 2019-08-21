@@ -1,15 +1,7 @@
 package com.sopromadze.blogapi.service;
 
-import com.sopromadze.blogapi.exception.BadRequestException;
-import com.sopromadze.blogapi.exception.ResourceNotFoundException;
-import com.sopromadze.blogapi.model.todo.Todo;
-import com.sopromadze.blogapi.model.user.User;
-import com.sopromadze.blogapi.payload.ApiResponse;
-import com.sopromadze.blogapi.payload.PagedResponse;
-import com.sopromadze.blogapi.repository.TodoRepository;
-import com.sopromadze.blogapi.repository.UserRepository;
-import com.sopromadze.blogapi.security.UserPrincipal;
-import com.sopromadze.blogapi.util.AppConstants;
+import java.util.Collections;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,7 +11,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import com.sopromadze.blogapi.exception.ResourceNotFoundException;
+import com.sopromadze.blogapi.model.todo.Todo;
+import com.sopromadze.blogapi.model.user.User;
+import com.sopromadze.blogapi.payload.ApiResponse;
+import com.sopromadze.blogapi.payload.PagedResponse;
+import com.sopromadze.blogapi.repository.TodoRepository;
+import com.sopromadze.blogapi.repository.UserRepository;
+import com.sopromadze.blogapi.security.UserPrincipal;
+import com.sopromadze.blogapi.util.AppUtils;
 
 @Service
 public class TodoService {
@@ -55,7 +55,7 @@ public class TodoService {
     }
 
     public PagedResponse<Todo> getAllTodos(UserPrincipal currentUser, int page, int size){
-        validatePageNumberAndSize(page, size);
+    	AppUtils.validatePageNumberAndSize(page, size);
         Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
 
         Page<Todo> todos = todoRepository.findByCreatedBy(currentUser.getId(), pageable);
@@ -102,20 +102,5 @@ public class TodoService {
             return new ResponseEntity<>(new ApiResponse(true, "You successfully deleted todo"), HttpStatus.OK);
         }
         return new ResponseEntity<>(new ApiResponse(false, "You don't have permission to make this operation"), HttpStatus.UNAUTHORIZED);
-    }
-
-
-    private void validatePageNumberAndSize(int page, int size) {
-        if(page < 0) {
-            throw new BadRequestException("Page number cannot be less than zero.");
-        }
-
-        if(size < 0) {
-            throw new BadRequestException("Size number cannot be less than zero.");
-        }
-
-        if(size > AppConstants.MAX_PAGE_SIZE) {
-            throw new BadRequestException("Page size must not be greater than " + AppConstants.MAX_PAGE_SIZE);
-        }
     }
 }

@@ -1,6 +1,15 @@
 package com.sopromadze.blogapi.service;
 
-import com.sopromadze.blogapi.exception.BadRequestException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Service;
+
 import com.sopromadze.blogapi.exception.ResourceNotFoundException;
 import com.sopromadze.blogapi.model.comment.Comment;
 import com.sopromadze.blogapi.model.post.Post;
@@ -13,16 +22,7 @@ import com.sopromadze.blogapi.repository.CommentRepository;
 import com.sopromadze.blogapi.repository.PostRepository;
 import com.sopromadze.blogapi.repository.UserRepository;
 import com.sopromadze.blogapi.security.UserPrincipal;
-import com.sopromadze.blogapi.util.AppConstants;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.stereotype.Service;
+import com.sopromadze.blogapi.util.AppUtils;
 
 @Service
 public class CommentService {
@@ -38,7 +38,7 @@ public class CommentService {
     }
 
     public PagedResponse<?> getAllComments(Long postId, int page, int size){
-        validatePageNumberAndSize(page, size);
+    	AppUtils.validatePageNumberAndSize(page, size);
         Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
         Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
@@ -99,19 +99,5 @@ public class CommentService {
         }
 
         return new ResponseEntity<>(new ApiResponse(false, "You don't have permission to delete this comment"), HttpStatus.BAD_REQUEST);
-    }
-
-    private void validatePageNumberAndSize(int page, int size) {
-        if(page < 0) {
-            throw new BadRequestException("Page number cannot be less than zero.");
-        }
-
-        if(size < 0) {
-            throw new BadRequestException("Size number cannot be less than zero.");
-        }
-
-        if(size > AppConstants.MAX_PAGE_SIZE) {
-            throw new BadRequestException("Page size must not be greater than " + AppConstants.MAX_PAGE_SIZE);
-        }
     }
 }

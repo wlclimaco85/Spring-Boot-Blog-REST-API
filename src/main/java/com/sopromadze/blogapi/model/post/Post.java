@@ -56,6 +56,9 @@ public class Post extends UserDateAudit {
 	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "tag_id", referencedColumnName = "id"))
 	private List<Tag> tags;
+	
+	@Column(name = "img_url")
+	private String imgUrl;
 
 	public Long getId() {
 		return id;
@@ -112,5 +115,13 @@ public class Post extends UserDateAudit {
 
 	public void setTags(List<Tag> tags) {
 		this.tags = tags;
+	}
+
+	public String getImgUrl() {
+		return imgUrl;
+	}
+
+	public void setImgUrl(String imgUrl) {
+		this.imgUrl = imgUrl;
 	}
 }
